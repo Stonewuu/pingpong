@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <springProperty scope="context" name="instanceId" source="spring.application.instance-id"/>
+    <springProperty scope="context" name="localPort" source="server.port"/>
+    
+    <!-- 确保logs目录存在 -->
+    <property name="LOG_DIR" value="logs/pong-service"/>
+    
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - [Instance: ${instanceId}] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 实例特定的文件输出 -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_DIR}/application-${instanceId}.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - [Instance: ${instanceId}] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 审计日志文件 -->
+    <appender name="AUDIT" class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_DIR}/audit-${instanceId}.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 限流日志文件 -->
+    <appender name="RATE_LIMIT" class="ch.qos.logback.core.FileAppender">
+        <file>${LOG_DIR}/rate-limit-${instanceId}.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 审计日志记录器 -->
+    <logger name="AUDIT" level="INFO" additivity="false">
+        <appender-ref ref="AUDIT"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <!-- 限流日志记录器 -->
+    <logger name="RATE_LIMIT" level="INFO" additivity="false">
+        <appender-ref ref="RATE_LIMIT"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+    </root>
+</configuration> 

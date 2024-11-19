@@ -1,0 +1,8 @@
+logs/*
+target/*
+**/target/*
+**/logs/*
+**/bin/*
+ping-lock.txt
+ping-rate.lock
+ping-rate.data

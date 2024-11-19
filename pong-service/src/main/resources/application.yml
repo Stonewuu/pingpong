@@ -1,0 +1,6 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    instance-id: ${random.uuid}

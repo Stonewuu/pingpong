@@ -1,0 +1,7 @@
+server:
+  port: 0
+  port-range: 8080-8090
+
+spring:
+  application:
+    instance-id: ${random.uuid}

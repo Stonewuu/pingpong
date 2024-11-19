@@ -1,0 +1,11 @@
+{
+    "java.project.sourcePaths": [
+        "common\\src\\main\\java\\com\\challenge\\config",
+        "common\\src\\main\\java\\com\\challenge\\model",
+        "ping-service\\src\\main\\java\\com\\challenge\\ping",
+        "pong-service\\src\\main\\java\\com\\challenge\\pong"
+    ],
+    "java.project.referencedLibraries": [],
+    "java.jdt.ls.java.home": "D:\\develop\\jdk-17.0.2",
+    "java.compile.nullAnalysis.mode": "disabled"
+}
