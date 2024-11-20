@@ -51,9 +51,19 @@
 
 ## 日志说明
 
-- 应用日志: logs/application.log
-- 审计日志: logs/audit.log
-- 限流日志: logs/rate-limit.log
+每个服务的日志都存放在各自的目录下:
+
+### Ping 服务日志 (logs/ping-service/)
+- 应用日志: application-${instanceId}.log
+- 审计日志: audit-${instanceId}.log
+- 限流日志: rate-limit-${instanceId}.log
+
+### Pong 服务日志 (logs/pong-service/)
+- 应用日志: application-${instanceId}.log
+- 审计日志: audit-${instanceId}.log
+- 限流日志: rate-limit-${instanceId}.log
+
+注: ${instanceId} 为服务实例ID，在多实例部署时用于区分不同实例的日志
 
 ## Docker部署
 
@@ -71,12 +81,3 @@
    所有服务的日志统一收集到项目根目录的logs文件夹下：
    - Ping服务日志: logs/ping-service/
    - Pong服务日志: logs/pong-service/
-
-## 注意事项
-
-- 确保已安装JDK 17
-- 确保已安装Docker和Docker Compose
-- 按顺序启动服务(先Pong后Ping)
-- 首次启动会自动创建必要的目录和文件
-- 每个服务实例都有唯一的实例ID
-- 所有服务共享同一个网络(pingpong-network)
