@@ -20,21 +20,25 @@
 ## 快速开始
 
 1. 构建整个项目:
+```
     mvn clean package
-
+```
 2. 启动Pong服务:
+```
     cd pong-service
     mvn spring-boot:run
-
+```
 3. 启动Ping服务:
+```
     cd ping-service
     mvn spring-boot:run
-
+```
 ## 服务验证
 
 测试Pong服务接口:
+```
     curl http://localhost:8081/api/pong
-
+```
 响应示例:
     正常响应: {"message": "World", "status": 200}
     限流响应: {"message": "Rate limited by Pong service", "status": 429}
@@ -42,7 +46,9 @@
 ## 测试运行
 
 执行测试:
+```
     mvn test
+```
 
 查看测试报告:
     target/site/jacoco/index.html
@@ -70,10 +76,10 @@
    - 构建Docker镜像: docker-compose build
 
 - 启动服务集群
-   - 启动所有服务: docker-compose up -d
-   - 查看服务状态: docker-compose ps
-   - 查看服务日志: docker-compose logs -f
-   - 停止所有服务: docker-compose down
+   - 启动所有服务: ``docker-compose up -d``
+   - 查看服务状态: ``docker-compose ps``
+   - 查看服务日志: ``docker-compose logs -f``
+   - 停止所有服务: ``docker-compose down``
 
 - 日志查看
    所有服务的日志统一收集到项目根目录的logs文件夹下：
