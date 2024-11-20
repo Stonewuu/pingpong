@@ -28,7 +28,7 @@ class PingServiceSpec extends Specification {
         webClientBuilder.baseUrl(_) >> webClientBuilder
         webClientBuilder.build() >> webClient
         
-        pingService = new PingService(webClientBuilder, globalRateLimiter)
+        pingService = new PingService(webClientBuilder, globalRateLimiter, "http://localhost:8081")
 
         // 清理可能存在的文件锁
         new File("ping-rate.lock").delete()

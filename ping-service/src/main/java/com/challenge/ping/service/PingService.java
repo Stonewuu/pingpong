@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @Slf4j
@@ -49,12 +50,18 @@ public class PingService {
     private final WebClient webClient;
     private final GlobalRateLimiter globalRateLimiter;
     
+    @Value("${ping.pong-service.url}")
+    private String pongServiceUrl;
+    
     public PingService(
-            WebClient.Builder webClientBuilder,
-            GlobalRateLimiter globalRateLimiter) {
-        this.webClient = webClientBuilder.baseUrl("http://localhost:8081").build();
+            WebClient.Builder webClientBuilder, 
+            GlobalRateLimiter globalRateLimiter,
+            @Value("${ping.pong-service.url}") String pongServiceUrl) {
         this.globalRateLimiter = globalRateLimiter;
-        auditLogger.info("Ping Service Started");
+        this.webClient = webClientBuilder
+            .baseUrl(pongServiceUrl)
+            .build();
+        log.info("Initialized WebClient with pong service URL: {}", pongServiceUrl);
     }
     
     @Scheduled(fixedRate = 1000)
