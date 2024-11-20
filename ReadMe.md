@@ -35,13 +35,13 @@
 ```
 ## 服务验证
 
-测试Pong服务接口:
+- 测试Pong服务接口:
 ```
     curl http://localhost:8081/api/pong
 ```
-响应示例:
-    正常响应: {"message": "World", "status": 200}
-    限流响应: {"message": "Rate limited by Pong service", "status": 429}
+- 响应示例:
+    - 正常响应: ``{"message": "World", "status": 200}``
+    - 限流响应: ``{"message": "Rate limited by Pong service", "status": 429}``
 
 ## 测试运行
 
