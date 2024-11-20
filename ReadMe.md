@@ -25,12 +25,10 @@
 2. 启动Pong服务:
     cd pong-service
     mvn spring-boot:run
-    # 服务将在8081端口启动
 
 3. 启动Ping服务:
     cd ping-service
     mvn spring-boot:run
-    # 服务将在8080端口启动
 
 ## 服务验证
 
