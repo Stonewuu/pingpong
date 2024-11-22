@@ -39,15 +39,26 @@ services:
     ports:
       - "10909:10909"
       - "10911:10911"
-    volumes:
-      - broker_data:/home/rocketmq/broker/logs
-      - broker_store:/home/rocketmq/broker/store
+      - "10912:10912"
     environment:
-      JAVA_OPT_EXT: "-Xms1024m -Xmx1024m -Xmn512m"
+      JAVA_OPT_EXT: "-Xms1024m -Xmx1024m -Xmn512m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m"
       NAMESRV_ADDR: "namesrv:9876"
+      BROKER_CONFIG: |
+        brokerClusterName = DefaultCluster
+        brokerName = broker-a
+        brokerId = 0
+        autoCreateTopicEnable = true
+        autoCreateSubscriptionGroup = true
+        defaultTopicQueueNums = 4
     depends_on:
       namesrv:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "sh -c 'netstat -an | grep 10911 | grep LISTEN'"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   pong-service:
     build: 
