@@ -1,0 +1,21 @@
+FROM eclipse-temurin:17-jre-alpine
+
+WORKDIR /app
+
+# 复制pong服务jar包
+COPY pong-service/target/*.jar pong-service.jar
+
+# 创建日志目录
+RUN mkdir -p logs/pong-service
+
+ENV JAVA_OPTS="-Xmx256m"
+
+# 启动pong服务
+CMD java $JAVA_OPTS \
+    -DSPRING_APPLICATION_NAME=pong-service \
+    -DSPRING_APPLICATION_INSTANCE_ID=${SPRING_APPLICATION_INSTANCE_ID} \
+    -DSPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL} \
+    -DSPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME} \
+    -DSPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD} \
+    -DROCKETMQ_NAME_SERVER=${ROCKETMQ_NAME_SERVER} \
+    -jar pong-service.jar 

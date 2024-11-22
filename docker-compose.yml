@@ -1,18 +1,94 @@
 version: '3.8'
 
 services:
-  pingpong:
-    build:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: pongdb
+      POSTGRES_USER: pong
+      POSTGRES_PASSWORD: pong@password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pong"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  namesrv:
+    image: apache/rocketmq:5.1.4
+    command: sh mqnamesrv
+    ports:
+      - "9876:9876"
+    volumes:
+      - namesrv_data:/home/rocketmq/namesrv/logs
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx256m -Xmn128m"
+    healthcheck:
+      test: ["CMD-SHELL", "jps | grep NamesrvStartup || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+
+  broker:
+    image: apache/rocketmq:5.1.4
+    command: sh mqbroker -n namesrv:9876
+    ports:
+      - "10909:10909"
+      - "10911:10911"
+    volumes:
+      - broker_data:/home/rocketmq/broker/logs
+      - broker_store:/home/rocketmq/broker/store
+    environment:
+      JAVA_OPT_EXT: "-Xms1024m -Xmx1024m -Xmn512m"
+      NAMESRV_ADDR: "namesrv:9876"
+    depends_on:
+      namesrv:
+        condition: service_healthy
+
+  pong-service:
+    build: 
       context: .
-      dockerfile: Dockerfile
-    container_name: pingpong-services
+      dockerfile: Dockerfile.pong
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pongdb
+      SPRING_DATASOURCE_USERNAME: pong
+      SPRING_DATASOURCE_PASSWORD: pong@password
+      ROCKETMQ_NAME_SERVER: namesrv:9876
+      SPRING_APPLICATION_NAME: pong-service
+      SPRING_APPLICATION_INSTANCE_ID: pong-1
+      ROCKETMQ_PRODUCER_GROUP: pong-service-producer-group
+      SERVER_PORT: 8080
     ports:
       - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      broker:
+        condition: service_started
+
+  ping-services:
+    build:
+      context: .
+      dockerfile: Dockerfile.ping
+    environment:
+      PONG_SERVICE_URL: http://pong-service:8080
+      JAVA_OPTS: "-Xmx256m"
+    ports:
       - "8081:8081"
       - "8082:8082"
       - "8083:8083"
-    volumes:
-      - ./logs:/app/logs
+    depends_on:
+      - pong-service
+
+volumes:
+  postgres_data:
+  namesrv_data:
+  broker_data:
+  broker_store:
 
 networks:
   default:

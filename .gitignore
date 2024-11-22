@@ -6,3 +6,8 @@ target/*
 ping-lock.txt
 ping-rate.lock
 ping-rate.data
+# Docker volumes
+postgres_data/
+namesrv_data/
+broker_data/
+broker_store/
