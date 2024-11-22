@@ -15,8 +15,7 @@ import java.io.File;
 @Slf4j
 @Component
 public class GlobalRateLimiter {
-    private static final String LOCK_FILE = "ping-rate.lock";
-    private static final String DATA_FILE = "ping-rate.data";
+    private static final String RATE_FILE = "ping-rate.data";
     private final double rate;
     private final long intervalMs;
     
@@ -30,7 +29,7 @@ public class GlobalRateLimiter {
     public GlobalRateLimiter(Integer rate, Duration interval) throws IOException {
         this.rate = rate;
         this.intervalMs = interval.toMillis();
-        this.dataFile = new RandomAccessFile(DATA_FILE, "rw");
+        this.dataFile = new RandomAccessFile(RATE_FILE, "rw");
         this.channel = dataFile.getChannel();
         
         if (dataFile.length() == 0) {
@@ -43,42 +42,47 @@ public class GlobalRateLimiter {
     }
     
     public boolean tryAcquire() {
-        try (RandomAccessFile lockFile = new RandomAccessFile(LOCK_FILE, "rw");
-             FileChannel lockChannel = lockFile.getChannel();
-             FileLock lock = lockChannel.lock()) {
-            
-            // 读取当前状态
-            ByteBuffer buffer = ByteBuffer.allocate(16);
-            channel.position(0);
-            channel.read(buffer);
-            buffer.flip();
-            
-            long lastRequestTime = buffer.getLong();
-            long requestCount = buffer.getLong();
-            long now = Instant.now().toEpochMilli();
-            
-            // 检查是否需要重置时间窗口
-            if (now - lastRequestTime >= intervalMs) {
-                lastRequestTime = now;
-                requestCount = 0;
-            }
-            
-            // 检查是否可以发送请求
-            if (requestCount < rate) {
-                requestCount++;
-                
-                // 更新状态
-                buffer.clear();
-                buffer.putLong(lastRequestTime);
-                buffer.putLong(requestCount);
-                buffer.flip();
+        try {
+            FileLock lock = channel.lock();
+            try {
+                // 读取当前状态
+                ByteBuffer buffer = ByteBuffer.allocate(16);
                 channel.position(0);
-                channel.write(buffer);
+                channel.read(buffer);
+                buffer.flip();
                 
-                return true;
+                long lastRequestTime = buffer.getLong();
+                long requestCount = buffer.getLong();
+                long now = Instant.now().toEpochMilli();
+                
+                // 检查是否需要重置时间窗口
+                if (now - lastRequestTime >= intervalMs) {
+                    lastRequestTime = now;
+                    requestCount = 0;
+                }
+                
+                // 检查是否可以发送请求
+                if (requestCount < rate) {
+                    requestCount++;
+                    
+                    // 更新状态
+                    buffer.clear();
+                    buffer.putLong(lastRequestTime);
+                    buffer.putLong(requestCount);
+                    buffer.flip();
+                    channel.position(0);
+                    channel.write(buffer);
+                    
+                    return true;
+                }
+                
+                return false;
+            } finally {
+                if (lock != null && lock.isValid()) {
+                    lock.release();
+                }
             }
             
-            return false;
         } catch (IOException e) {
             log.error("Error while trying to acquire rate limit", e);
             return false;
@@ -91,8 +95,7 @@ public class GlobalRateLimiter {
             channel.close();
             dataFile.close();
             // 删除数据文件
-            new File(DATA_FILE).delete();
-            new File(LOCK_FILE).delete();
+            new File(RATE_FILE).delete();
         } catch (IOException e) {
             log.error("Error while cleaning up rate limiter", e);
         }
