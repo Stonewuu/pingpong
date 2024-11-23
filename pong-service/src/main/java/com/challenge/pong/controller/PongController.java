@@ -9,9 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 import lombok.extern.slf4j.Slf4j;
-import com.challenge.pong.model.PongRecord;
 import com.challenge.pong.service.PongMessageService;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RestController
@@ -45,15 +43,6 @@ public class PongController {
             var response = acquired 
                 ? new PongResponse("World", 200, requestId)
                 : new PongResponse("Rate limited by Pong service", 429, requestId);
-            
-            // 创建记录并发送消息
-            PongRecord record = new PongRecord();
-            record.setMessage(response.message());
-            record.setStatus(response.status());
-            record.setTimestamp(LocalDateTime.now());
-            record.setRequestId(requestId);
-            
-            messageService.sendPongResponse(record);
             
             if (acquired) {
                 log.info("Processing ping request");

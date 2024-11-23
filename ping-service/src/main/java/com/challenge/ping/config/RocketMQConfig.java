@@ -1,4 +1,4 @@
-package com.challenge.pong.config;
+package com.challenge.ping.config;
 
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
@@ -18,7 +18,6 @@ public class RocketMQConfig {
     
     @Value("${rocketmq.producer.group}")
     private String producerGroup;
-    
     
     @Bean
     public RocketMQTemplate rocketMQTemplate() {

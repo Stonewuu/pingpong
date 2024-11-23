@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @SpringBootApplication(scanBasePackages = "com.challenge")
 @EnableJpaRepositories(basePackages = "com.challenge.pong.repository")
 @EntityScan(basePackages = "com.challenge.pong.model")
+
 public class PongApplication {
     public static void main(String[] args) {
         SpringApplication.run(PongApplication.class, args);

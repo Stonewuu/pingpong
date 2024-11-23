@@ -6,7 +6,7 @@ spring:
     name: ${SPRING_APPLICATION_NAME:pong-service}
     instance-id: ${SPRING_APPLICATION_INSTANCE_ID:${random.uuid}}
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/pongdb}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/pong}
     username: ${SPRING_DATASOURCE_USERNAME:pong}
     password: ${SPRING_DATASOURCE_PASSWORD:pong@password}
     driver-class-name: org.postgresql.Driver
@@ -17,13 +17,6 @@ spring:
     
 rocketmq:
   name-server: ${ROCKETMQ_NAME_SERVER:localhost:9876}
-  producer:
-    group: ${ROCKETMQ_PRODUCER_GROUP:${spring.application.name}-producer-group}
-    send-message-timeout: 3000
-    retry-times-when-send-failed: 2
-    retry-times-when-send-async-failed: 0
-    compress-message-body-threshold: 4096
-    max-message-size: 4194304
 
 management:
   endpoints:
@@ -33,3 +26,9 @@ management:
   endpoint:
     health:
       show-details: always
+
+logging:
+  level:
+    org.apache.rocketmq: DEBUG
+    com.challenge.pong: DEBUG
+    root: INFO

@@ -33,7 +33,7 @@
         <guava.version>33.0.0-jre</guava.version>
         <lombok.version>1.18.30</lombok.version>
         <groovy.version>4.0.15</groovy.version>
-        <rocketmq.version>2.2.3</rocketmq.version>
+        <rocketmq.version>2.3.1</rocketmq.version>
     </properties>
 
     <dependencyManagement>

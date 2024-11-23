@@ -7,11 +7,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
+
+import com.challenge.ping.model.PingRecord;
+
 import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import org.springframework.beans.factory.annotation.Value;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -49,6 +52,7 @@ public class PingService {
     
     private final WebClient webClient;
     private final GlobalRateLimiter globalRateLimiter;
+    private final PingMessageService messageService;
     
     @Value("${ping.pong-service.url}")
     private String pongServiceUrl;
@@ -56,12 +60,14 @@ public class PingService {
     public PingService(
             WebClient.Builder webClientBuilder, 
             GlobalRateLimiter globalRateLimiter,
-            @Value("${ping.pong-service.url}") String pongServiceUrl) {
+            @Value("${ping.pong-service.url}") String pongServiceUrl,
+            PingMessageService messageService) {
         this.globalRateLimiter = globalRateLimiter;
         this.webClient = webClientBuilder
             .baseUrl(pongServiceUrl)
             .build();
         log.info("Initialized WebClient with pong service URL: {}", pongServiceUrl);
+        this.messageService = messageService;
     }
     
     @Scheduled(fixedRate = 1000)
@@ -70,46 +76,49 @@ public class PingService {
     }
     
     public Mono<PingResult> sendPing() {
-        log.debug("Try to send ping request to Pong service");
-        if (!globalRateLimiter.tryAcquire()) {
-            var result = new PingResult(PingStatus.RATE_LIMITED_LOCAL, 
-                "Rate limited by global limiter");
-            auditLogger.info("Result: {}", result);
-            return Mono.just(result);
-        }
+        auditLogger.info("Try to send ping request to Pong service");
+        String requestId = UUID.randomUUID().toString();
         
-        auditLogger.info("Attempting to send ping request");
+        if (!globalRateLimiter.tryAcquire()) {
+            PingRecord record = new PingRecord();
+            record.setMessage(PingStatus.RATE_LIMITED_LOCAL.getDescription());
+            record.setStatus(429);
+            record.setTimestamp(LocalDateTime.now());
+            record.setRequestId(requestId);
+            messageService.sendPingMessage(record);
+            auditLogger.info("Result: {}", record);
+            
+            return Mono.just(new PingResult(PingStatus.RATE_LIMITED_LOCAL, 
+                PingStatus.RATE_LIMITED_LOCAL.getDescription()));
+        }
+
         return webClient.get()
             .uri("/api/pong")
-            .attribute("parameter", "hello")
             .retrieve()
-            .onStatus(
-                HttpStatus.TOO_MANY_REQUESTS::equals,
-                response -> response.bodyToMono(String.class)
-                    .map(body -> {
-                        var result = new PingResult(PingStatus.RATE_LIMITED_REMOTE, body);
-                        auditLogger.info("Result: {}", result);
-                        return result;
-                    })
-                    .then(Mono.empty())
-            )
+            .onStatus(status -> status.is4xxClientError(), response -> 
+                Mono.just(new RuntimeException(PingStatus.RATE_LIMITED_REMOTE.getDescription())))
             .toEntity(String.class)
             .map(response -> {
-                if (response.getStatusCode() == HttpStatus.OK) {
-                    var result = new PingResult(PingStatus.SUCCESS, response.getBody());
-                    auditLogger.info("Result: {}", result);
-                    return result;
-                }
-                return new PingResult(PingStatus.SUCCESS, "Unexpected response");
+                PingRecord record = new PingRecord();
+                record.setMessage(response.getBody());
+                record.setStatus(response.getStatusCode().value());
+                record.setTimestamp(LocalDateTime.now());
+                record.setRequestId(requestId);
+                messageService.sendPingMessage(record);
+                auditLogger.info("Result: {}", record);
+                
+                return new PingResult(PingStatus.SUCCESS, response.getBody());
             })
-            .doOnError(error -> {
-                if (!(error instanceof WebClientResponseException.TooManyRequests)) {
-                    log.error("Error during ping request - Error: {}", error);
-                    auditLogger.error("Ping request failed - Error: {}", error.getMessage());
-                }
-            })
-            .onErrorResume(e -> Mono.just(
-                new PingResult(PingStatus.SUCCESS, "Error: " + e.getMessage())
-            ));
+            .onErrorResume(e -> {
+                PingRecord record = new PingRecord();
+                record.setMessage(e.getMessage());
+                record.setStatus(429);
+                record.setTimestamp(LocalDateTime.now());
+                record.setRequestId(requestId);
+                messageService.sendPingMessage(record);
+                auditLogger.info("Result: {}", record);
+                
+                return Mono.just(new PingResult(PingStatus.RATE_LIMITED_REMOTE, e.getMessage()));
+            });
     }
 } 

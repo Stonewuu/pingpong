@@ -3,16 +3,17 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # 复制ping服务jar包
-COPY ping-service/target/*.jar ping-service.jar
+COPY ping-service/target/*.jar /app/ping-service.jar
 
 # 创建日志目录
 RUN mkdir -p logs/ping-service
 
-# 复制启动脚本
+# 复制启动脚本并修复换行符问题
 COPY start-ping-services.sh /app/
-RUN chmod +x /app/start-ping-services.sh
+RUN chmod +x /app/start-ping-services.sh && \
+    dos2unix /app/start-ping-services.sh
 
 ENV JAVA_OPTS="-Xmx256m"
 
 # 使用启动脚本启动服务
-CMD ["/app/start-ping-services.sh"] 
+CMD ["sh", "/app/start-ping-services.sh"]

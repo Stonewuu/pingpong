@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: pongdb
+      POSTGRES_DB: pong
       POSTGRES_USER: pong
       POSTGRES_PASSWORD: pong@password
     ports:
@@ -19,27 +17,23 @@ services:
 
   namesrv:
     image: apache/rocketmq:5.1.4
-    command: sh mqnamesrv
+    container_name: rmqnamesrv
     ports:
       - "9876:9876"
     volumes:
-      - namesrv_data:/home/rocketmq/namesrv/logs
-    environment:
-      JAVA_OPT_EXT: "-Xms256m -Xmx256m -Xmn128m"
-    healthcheck:
-      test: ["CMD-SHELL", "jps | grep NamesrvStartup || exit 1"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 20s
+      - namesrv_data:/home/rocketmq/namesrv/store
+    command: sh mqnamesrv
+    networks:
+      - default
 
   broker:
     image: apache/rocketmq:5.1.4
-    command: sh mqbroker -n namesrv:9876
+    container_name: rmqbroker
     ports:
       - "10909:10909"
       - "10911:10911"
       - "10912:10912"
+    command: sh mqbroker  -n namesrv:9876
     environment:
       JAVA_OPT_EXT: "-Xms1024m -Xmx1024m -Xmn512m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m"
       NAMESRV_ADDR: "namesrv:9876"
@@ -51,27 +45,21 @@ services:
         autoCreateSubscriptionGroup = true
         defaultTopicQueueNums = 4
     depends_on:
-      namesrv:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "sh -c 'netstat -an | grep 10911 | grep LISTEN'"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
+      - namesrv
+    networks:
+      - default
 
   pong-service:
     build: 
       context: .
       dockerfile: Dockerfile.pong
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pongdb
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pong
       SPRING_DATASOURCE_USERNAME: pong
       SPRING_DATASOURCE_PASSWORD: pong@password
       ROCKETMQ_NAME_SERVER: namesrv:9876
       SPRING_APPLICATION_NAME: pong-service
       SPRING_APPLICATION_INSTANCE_ID: pong-1
-      ROCKETMQ_PRODUCER_GROUP: pong-service-producer-group
       SERVER_PORT: 8080
     ports:
       - "8080:8080"
@@ -88,6 +76,8 @@ services:
     environment:
       PONG_SERVICE_URL: http://pong-service:8080
       JAVA_OPTS: "-Xmx256m"
+      ROCKETMQ_NAME_SERVER: namesrv:9876
+      ROCKETMQ_PRODUCER_GROUP: ping-producer-group
     ports:
       - "8081:8081"
       - "8082:8082"
