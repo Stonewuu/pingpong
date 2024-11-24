@@ -15,8 +15,4 @@ Get-Process minikube | Where-Object {$_.CommandLine -like "*service*"} | Stop-Pr
 Write-Host "删除Kubernetes资源..." -ForegroundColor Yellow
 kubectl delete -k k8s/base
 
-# 清理 minikube tunnel
-Write-Host "清理 minikube tunnel..." -ForegroundColor Yellow
-minikube tunnel --cleanup
-
 Write-Host "`n所有服务已停止!" -ForegroundColor Green 
