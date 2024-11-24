@@ -52,11 +52,13 @@ public class PongController {
                 log.info("Rate limiting ping request");
             }
             
-            return switch (response.status()) {
-                case 200 -> ResponseEntity.ok(response.message());
-                case 429 -> ResponseEntity.status(429).body(response.message());
-                default -> ResponseEntity.internalServerError().body("Unknown error");
-            };
+            if (response.status() == 200) {
+                return ResponseEntity.ok(response.message());
+            } else if (response.status() == 429) {
+                return ResponseEntity.status(429).body(response.message());
+            } else {
+                return ResponseEntity.internalServerError().body("Unknown error");
+            }
         });
     }
 } 

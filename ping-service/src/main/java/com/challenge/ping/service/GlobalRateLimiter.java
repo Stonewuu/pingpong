@@ -2,102 +2,89 @@ package com.challenge.ping.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import jakarta.annotation.PreDestroy;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.ByteBuffer;
 import java.time.Duration;
-import java.time.Instant;
 import java.io.File;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.Path;
+import java.nio.file.Files;
 
 @Slf4j
 @Component
 public class GlobalRateLimiter {
-    private static final String RATE_FILE = "ping-rate.data";
-    private final double rate;
-    private final long intervalMs;
+    private static final String DATA_FILE = "ping-rate.data";
+    private final int rateLimit;
+    private final Duration duration;
+    private final Path dataPath;
     
-    private final RandomAccessFile dataFile;
-    private final FileChannel channel;
-    
-    public GlobalRateLimiter() throws IOException {
+    public GlobalRateLimiter() {
         this(2, Duration.ofSeconds(1));
     }
-    
-    public GlobalRateLimiter(Integer rate, Duration interval) throws IOException {
-        this.rate = rate;
-        this.intervalMs = interval.toMillis();
-        this.dataFile = new RandomAccessFile(RATE_FILE, "rw");
-        this.channel = dataFile.getChannel();
-        
-        if (dataFile.length() == 0) {
-            ByteBuffer buffer = ByteBuffer.allocate(16);
-            buffer.putLong(0);
-            buffer.putLong(0);
-            buffer.flip();
-            channel.write(buffer);
-        }
+
+    public GlobalRateLimiter(int rateLimit, Duration duration) {
+        this.rateLimit = Math.max(1, rateLimit);
+        this.duration = duration;
+        this.dataPath = new File(DATA_FILE).toPath();
     }
-    
+
     public boolean tryAcquire() {
-        try {
-            FileLock lock = channel.lock();
-            try {
-                // 读取当前状态
+        try (FileChannel channel = FileChannel.open(dataPath, 
+                StandardOpenOption.CREATE,
+                StandardOpenOption.READ,
+                StandardOpenOption.WRITE)) {
+                
+            try (FileLock lock = channel.tryLock()) {
                 ByteBuffer buffer = ByteBuffer.allocate(16);
                 channel.position(0);
-                channel.read(buffer);
+                int bytesRead = channel.read(buffer);
                 buffer.flip();
                 
-                long lastRequestTime = buffer.getLong();
-                long requestCount = buffer.getLong();
-                long now = Instant.now().toEpochMilli();
+                long lastRequestTime;
+                long requestCount;
                 
-                // 检查是否需要重置时间窗口
-                if (now - lastRequestTime >= intervalMs) {
+                if (bytesRead == 16) {
+                    lastRequestTime = buffer.getLong();
+                    requestCount = buffer.getLong();
+                } else {
+                    lastRequestTime = System.currentTimeMillis();
+                    requestCount = 0;
+                }
+                
+                long now = System.currentTimeMillis();
+                if (now - lastRequestTime >= duration.toMillis()) {
                     lastRequestTime = now;
                     requestCount = 0;
                 }
                 
-                // 检查是否可以发送请求
-                if (requestCount < rate) {
+                if (requestCount < rateLimit) {
                     requestCount++;
-                    
-                    // 更新状态
                     buffer.clear();
                     buffer.putLong(lastRequestTime);
                     buffer.putLong(requestCount);
                     buffer.flip();
+                    
                     channel.position(0);
                     channel.write(buffer);
-                    
+                    channel.force(true);
                     return true;
                 }
                 
                 return false;
-            } finally {
-                if (lock != null && lock.isValid()) {
-                    lock.release();
-                }
             }
-            
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.error("Error while trying to acquire rate limit", e);
             return false;
         }
     }
-    
-    @PreDestroy
+
     public void cleanup() {
         try {
-            channel.close();
-            dataFile.close();
-            // 删除数据文件
-            new File(RATE_FILE).delete();
+            Files.deleteIfExists(dataPath);
         } catch (IOException e) {
-            log.error("Error while cleaning up rate limiter", e);
+            log.error("Error cleaning up rate limiter", e);
         }
     }
 } 

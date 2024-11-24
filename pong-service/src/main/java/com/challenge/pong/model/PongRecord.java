@@ -2,9 +2,15 @@ package com.challenge.pong.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
+@ToString
 @Entity
 @Table(name = "pong_records")
 public class PongRecord {

@@ -13,14 +13,19 @@ public class PongMessageService {
     private final PongRecordRepository repository;
 
     
-    public void consumePongResponse(PongRecord record) {
-        try {
-            log.info("接收到消息: {}", record);
-            repository.save(record);
-            log.info("消息成功保存到数据库: {}", record);
-        } catch (Exception e) {
-            log.error("消息处理失败: {}", e.getMessage(), e);
-            throw new RuntimeException("消息处理失败", e);
+    public boolean consumePongResponse(PongRecord record) {
+        if (record == null) {
+            log.error("receive null message");
+            return false;
         }
+        try {
+            log.info("receive message: {}", record);
+            repository.save(record);
+            log.info("message saved to database: {}", record);
+        } catch (Exception e) {
+            log.error("handle message failed: {}", e.getMessage(), e);
+            throw new RuntimeException("handle message failed", e);
+        }
+        return true;
     }
 } 

@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ping-service
+  namespace: pingpong
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ping-service
+  template:
+    metadata:
+      labels:
+        app: ping-service
+    spec:
+      initContainers:
+      - name: init-script
+        image: busybox
+        command: ['sh', '-c', 'echo "#!/bin/sh" > /scripts/start.sh && 
+          echo "java \$JAVA_OPTS -DSPRING_APPLICATION_NAME=ping-service -DSPRING_APPLICATION_INSTANCE_ID=ping-1 -DSERVER_PORT=8081 -jar /app/ping-service.jar &" >> /scripts/start.sh &&
+          echo "java \$JAVA_OPTS -DSPRING_APPLICATION_NAME=ping-service -DSPRING_APPLICATION_INSTANCE_ID=ping-2 -DSERVER_PORT=8082 -jar /app/ping-service.jar &" >> /scripts/start.sh &&
+          echo "java \$JAVA_OPTS -DSPRING_APPLICATION_NAME=ping-service -DSPRING_APPLICATION_INSTANCE_ID=ping-3 -DSERVER_PORT=8083 -jar /app/ping-service.jar &" >> /scripts/start.sh &&
+          echo "wait" >> /scripts/start.sh &&
+          chmod +x /scripts/start.sh']
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+      containers:
+      - name: ping-service
+        image: ping-service:latest
+        imagePullPolicy: IfNotPresent
+        command: ["/scripts/start.sh"]
+        env:
+        - name: PONG_SERVICE_URL
+          value: http://pong-service:8080
+        - name: ROCKETMQ_NAME_SERVER
+          value: rocketmq-namesrv:9876
+        - name: ROCKETMQ_PRODUCER_GROUP
+          value: ping-producer-group
+        - name: JAVA_OPTS
+          value: "-Xmx256m"
+        ports:
+        - containerPort: 8081
+        - containerPort: 8082
+        - containerPort: 8083
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts
+      volumes:
+      - name: scripts
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ping-service
+  namespace: pingpong
+spec:
+  selector:
+    app: ping-service
+  ports:
+  - name: ping-1
+    port: 8081
+    targetPort: 8081
+  - name: ping-2
+    port: 8082
+    targetPort: 8082
+  - name: ping-3
+    port: 8083
+    targetPort: 8083 

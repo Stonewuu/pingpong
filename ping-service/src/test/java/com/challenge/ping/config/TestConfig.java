@@ -12,6 +12,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
 
+import org.mockito.Mockito;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
+
 @TestConfiguration
 public class TestConfig {
     
@@ -25,5 +28,11 @@ public class TestConfig {
                 // 测试环境下不启动定时任务
             }
         };
+    }
+    
+    @Bean
+    @Primary
+    public RocketMQTemplate testRocketMQTemplate() {
+        return Mockito.mock(RocketMQTemplate.class);
     }
 } 

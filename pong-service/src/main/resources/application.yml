@@ -29,6 +29,4 @@ management:
 
 logging:
   level:
-    org.apache.rocketmq: DEBUG
-    com.challenge.pong: DEBUG
     root: INFO

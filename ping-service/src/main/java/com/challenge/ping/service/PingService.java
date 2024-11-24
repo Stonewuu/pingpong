@@ -111,14 +111,15 @@ public class PingService {
             })
             .onErrorResume(e -> {
                 PingRecord record = new PingRecord();
-                record.setMessage(e.getMessage());
+                record.setMessage(PingStatus.RATE_LIMITED_REMOTE.getDescription());
                 record.setStatus(429);
                 record.setTimestamp(LocalDateTime.now());
                 record.setRequestId(requestId);
                 messageService.sendPingMessage(record);
                 auditLogger.info("Result: {}", record);
                 
-                return Mono.just(new PingResult(PingStatus.RATE_LIMITED_REMOTE, e.getMessage()));
+                return Mono.just(new PingResult(PingStatus.RATE_LIMITED_REMOTE, 
+                    PingStatus.RATE_LIMITED_REMOTE.getDescription()));
             });
     }
 } 

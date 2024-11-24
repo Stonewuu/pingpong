@@ -20,7 +20,7 @@ public class RocketMQConfig {
     private String producerGroup;
     
     @Bean
-    public RocketMQTemplate rocketMQTemplate() {
+    public DefaultMQProducer producer() {
         DefaultMQProducer producer = new DefaultMQProducer();
         producer.setNamesrvAddr(nameServer);
         producer.setProducerGroup(producerGroup);
@@ -35,6 +35,12 @@ public class RocketMQConfig {
         producer.setCompressMsgBodyOverHowmuch(4096);
         producer.setMaxMessageSize(4194304);
         producer.setRetryAnotherBrokerWhenNotStoreOK(true);
+        
+        return producer;
+    }
+    
+    @Bean
+    public RocketMQTemplate rocketMQTemplate(DefaultMQProducer producer) {
         
         // 创建并配置消息转换器
         MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();

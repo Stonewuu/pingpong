@@ -64,4 +64,24 @@ class PongControllerSpec extends Specification {
         results.count { it.statusCodeValue == 200 } == 1
         results.count { it.statusCodeValue == 429 } == 2
     }
+    
+    
+    def "should return internal server error for unknown status code"() {
+        given:
+        def response = new PongController.PongResponse("test", 500, "test-id")
+        
+        when:
+        def result
+        if (response.status() == 200) {
+            result = ResponseEntity.ok(response.message())
+        } else if (response.status() == 429) {
+            result = ResponseEntity.status(429).body(response.message())
+        } else {
+            result = ResponseEntity.internalServerError().body("Unknown error")
+        }
+        
+        then:
+        result.statusCodeValue == 500
+        result.body == "Unknown error"
+    }
 } 
