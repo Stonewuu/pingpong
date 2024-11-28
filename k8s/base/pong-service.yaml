@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: pong-service
-        image: pong-service:latest
+        image: docker.io/library/pong-service:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8080

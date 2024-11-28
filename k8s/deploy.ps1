@@ -11,7 +11,7 @@ Write-Host "检查minikube状态..." -ForegroundColor Yellow
 $minikubeStatus = minikube status --format='{{.Host}}' 2>&1
 if ($minikubeStatus -ne "Running") {
     Write-Host "启动minikube..." -ForegroundColor Yellow
-    minikube start --memory=4096 --cpus=2
+    minikube start --memory=4096 --cpus=4
 }
 
 # 设置使用minikube的docker环境

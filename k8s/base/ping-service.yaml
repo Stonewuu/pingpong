@@ -15,7 +15,7 @@ spec:
     spec:
       initContainers:
       - name: init-script
-        image: busybox
+        image: docker.m.daocloud.io/library/busybox
         command: ['sh', '-c', 'echo "#!/bin/sh" > /scripts/start.sh && 
           echo "java \$JAVA_OPTS -DSPRING_APPLICATION_NAME=ping-service -DSPRING_APPLICATION_INSTANCE_ID=ping-1 -DSERVER_PORT=8081 -jar /app/ping-service.jar &" >> /scripts/start.sh &&
           echo "java \$JAVA_OPTS -DSPRING_APPLICATION_NAME=ping-service -DSPRING_APPLICATION_INSTANCE_ID=ping-2 -DSERVER_PORT=8082 -jar /app/ping-service.jar &" >> /scripts/start.sh &&
@@ -27,7 +27,7 @@ spec:
           mountPath: /scripts
       containers:
       - name: ping-service
-        image: ping-service:latest
+        image: docker.io/library/ping-service:latest
         imagePullPolicy: IfNotPresent
         command: ["/scripts/start.sh"]
         env:
