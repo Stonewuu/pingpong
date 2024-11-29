@@ -21,10 +21,8 @@ public class MQConsumerService {
     public class PongResponseConsumers implements RocketMQListener<PongRecord> {
         @Override
         public void onMessage(PongRecord message) {
-            log.info("received message: {}", message);
             try {
                 messageService.consumePongResponse(message);
-                log.info("message processed: {}", message.getRequestId());
             } catch (Exception e) {
                 log.error("message processing failed: {}", e.getMessage(), e);
             }

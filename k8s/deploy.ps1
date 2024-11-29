@@ -1,11 +1,4 @@
-﻿# 在脚本最开始添加
-$PSDefaultParameterValues['*:Encoding'] = 'utf8'
-$OutputEncoding = [System.Text.Encoding]::UTF8
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-
-# 设置控制台代码页
-cmd /c chcp 65001 > $null
-
+﻿
 # 确保minikube在运行
 Write-Host "检查minikube状态..." -ForegroundColor Yellow
 $minikubeStatus = minikube status --format='{{.Host}}' 2>&1

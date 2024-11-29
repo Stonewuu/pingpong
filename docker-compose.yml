@@ -32,17 +32,11 @@ services:
       - "10911:10911"
       - "10912:10912"
     command: sh mqbroker  -n namesrv:9876  -c ../conf/broker.conf
+    volumes:
+      - ./broker.conf:/home/rocketmq/rocketmq-5.1.4/conf/broker.conf
     environment:
       JAVA_OPT_EXT: "-Xms1024m -Xmx1024m -Xmn512m -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m"
       NAMESRV_ADDR: "namesrv:9876"
-      BROKER_CONFIG: |
-        brokerClusterName = DefaultCluster
-        brokerName = broker-a
-        brokerId = 0
-        autoCreateTopicEnable = true
-        autoCreateSubscriptionGroup = true
-        defaultTopicQueueNums = 4
-        brokerIP1 = 127.0.0.1
 
     depends_on:
       - namesrv

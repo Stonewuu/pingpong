@@ -1,12 +1,11 @@
 {
     "java.project.sourcePaths": [
-        "common\\src\\main\\java\\com\\challenge\\config",
-        "common\\src\\main\\java\\com\\challenge\\model",
         "ping-service\\src\\main\\java\\com\\challenge\\ping",
         "pong-service\\src\\main\\java\\com\\challenge\\pong"
     ],
     "java.project.referencedLibraries": [],
     "java.compile.nullAnalysis.mode": "disabled",
     "java.jdt.ls.java.home": "",
-    "java.configuration.updateBuildConfiguration": "automatic"
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx2G -Xms100m -Xlog:disable"
 }

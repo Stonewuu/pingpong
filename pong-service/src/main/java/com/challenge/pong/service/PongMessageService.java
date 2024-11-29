@@ -15,11 +15,9 @@ public class PongMessageService {
     
     public boolean consumePongResponse(PongRecord record) {
         if (record == null) {
-            log.error("receive null message");
             return false;
         }
         try {
-            log.info("receive message: {}", record);
             repository.save(record);
             log.info("message saved to database: {}", record);
         } catch (Exception e) {
